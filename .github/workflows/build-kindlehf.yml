@@ -3,6 +3,8 @@ name: Build Kindle binaries
 on:
   workflow_dispatch:
   push:
+    branches:
+      - cover-mode
     tags:
       - "v*"
 
