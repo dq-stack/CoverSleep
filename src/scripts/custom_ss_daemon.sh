@@ -313,10 +313,15 @@ while read -r LINE <&3; do
 
         *outOfScreenSaver*)
 
-            shield_down
-
+            #
+            # Flash-clear while the shield is still up. The reader repaints
+            # as soon as the shield unmaps, so clearing afterwards would wipe
+            # that repaint and cause a second flash + redraw in books.
+            #
             "$FBINK" \
                 -k -f -W GC16 >>"$LOG" 2>&1
+
+            shield_down
 
             screen_refresh
 
