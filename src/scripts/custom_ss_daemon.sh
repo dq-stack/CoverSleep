@@ -279,7 +279,7 @@ while read -r LINE <&3; do
 
             COVER=""
 
-            if cover_mode_enabled && in_book; then
+            if cover_mode_enabled; then
                 COVER="$(current_cover_path)" || COVER=""
             fi
 

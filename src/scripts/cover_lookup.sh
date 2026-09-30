@@ -22,10 +22,40 @@ in_book() {
 
 
 #
-# The most recently accessed library item is the open book. cc.db can lag
-# a few seconds behind opening a book, which is an accepted edge case.
+# The KF8 renderer (webreader) runs only while a book is open and holds
+# exactly that book's file, so it answers both "in a book?" and "which
+# book?" the moment the book opens.
+#
+webreader_book() {
+    for CL_CMDLINE in /proc/[0-9]*/cmdline; do
+        CL_NAME="$(tr '\0' '\n' < "$CL_CMDLINE" 2>/dev/null | head -n 1)"
+
+        [ "${CL_NAME##*/}" = "webreader" ] || continue
+
+        ls -l "${CL_CMDLINE%/cmdline}/fd" 2>/dev/null |
+            sed -n 's/.*-> //p' |
+            grep -E '^/mnt/(us|base-us)/documents/.*\.(azw3|azw|mobi|AZW3|AZW|MOBI)$'
+    done | head -n 1
+}
+
+
+#
+# Books rendered without webreader (e.g. older MOBI) fall back to appmgrd
+# plus the most recently accessed library item. cc.db can lag a few
+# seconds behind opening a book, which is an accepted edge case.
 #
 current_book_path() {
+    CL_WEBREADER_BOOK="$(webreader_book)"
+
+    if [ -n "$CL_WEBREADER_BOOK" ]; then
+        echo "$CL_WEBREADER_BOOK"
+        return 0
+    fi
+
+    if ! in_book; then
+        return 1
+    fi
+
     sqlite3 "$CC_DB" \
         "SELECT p_location FROM Entries
          WHERE p_type='Entry:Item' AND p_location IS NOT NULL
@@ -40,8 +70,12 @@ current_book_path() {
 current_cover_path() {
     CL_BOOK="$(current_book_path)"
 
-    if [ -z "$CL_BOOK" ] || [ ! -f "$CL_BOOK" ]; then
-        log "Cover: no current book"
+    if [ -z "$CL_BOOK" ]; then
+        return 1
+    fi
+
+    if [ ! -f "$CL_BOOK" ]; then
+        log "Cover: book file missing: $CL_BOOK"
         return 1
     fi
 
