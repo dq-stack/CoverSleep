@@ -323,7 +323,16 @@ while read -r LINE <&3; do
 
             shield_down
 
-            screen_refresh
+            #
+            # The reader repaints by itself when the shield unmaps; forcing
+            # another repaint there makes the page draw twice. Home and other
+            # screens don't, so they still need the refresh.
+            #
+            if [ -n "$(webreader_book)" ]; then
+                log "Wake: reader repainted itself"
+            else
+                screen_refresh
+            fi
 
             log "Wake refresh complete"
 
