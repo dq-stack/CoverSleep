@@ -277,12 +277,24 @@ while read -r LINE <&3; do
 
         *goingToScreenSaver*)
 
+            COVER=""
+
+            if cover_mode_enabled && in_book; then
+                COVER="$(current_cover_path)" || COVER=""
+            fi
+
+            #
+            # Nothing of ours to show: step aside so the stock screensaver
+            # takes over (the EXIT trap restores the Amazon renderers).
+            #
+            if [ -z "$COVER" ] && ! ls "$SS_DIR"/*.png >/dev/null 2>&1; then
+                log "No cover and no custom images - restoring stock screensaver"
+                exit 0
+            fi
+
             shield_up
 
-            if cover_mode_enabled && in_book &&
-                COVER="$(current_cover_path)" &&
-                draw_cover "$COVER"
-            then
+            if [ -n "$COVER" ] && draw_cover "$COVER"; then
                 log "Book cover drawn"
             elif draw_screensaver; then
                 log "Custom screensaver drawn"

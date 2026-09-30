@@ -21,6 +21,19 @@ log() {
 }
 
 
+#
+# Show a one-line status message near the bottom of the screen.
+#
+notify() {
+    for NOTIFY_FBINK in "$BASE/bin/fbink_hf" "$BASE/bin/fbink"; do
+        if [ -x "$NOTIFY_FBINK" ]; then
+            "$NOTIFY_FBINK" -q -m -y -6 "$1" >/dev/null 2>&1
+            return
+        fi
+    done
+}
+
+
 daemon_is_running() {
     if [ ! -f "$PIDFILE" ]; then
         return 1
@@ -127,6 +140,7 @@ disable_custom_ss() {
     fi
 
     log "Custom screensaver DISABLED"
+    notify "Custom screensaver OFF"
 }
 
 
@@ -141,6 +155,12 @@ enable_custom_ss() {
     #
     if ! emergency_cleanup; then
         log "ERROR: cannot enable while renderer restoration is incomplete"
+        exit 1
+    fi
+
+    if ! ls /mnt/us/screensavers/*.png >/dev/null 2>&1; then
+        log "No images in /mnt/us/screensavers - not enabling"
+        notify "No images in /screensavers - stock screensaver kept"
         exit 1
     fi
 
@@ -162,11 +182,13 @@ enable_custom_ss() {
 
         if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
             log "Custom screensaver ENABLED (PID $PID)"
+            notify "Custom screensaver ON"
             exit 0
         fi
     fi
 
     log "ERROR: daemon failed to start"
+    notify "Custom screensaver failed to start - stock kept"
 
     kill "$NEWPID" 2>/dev/null
     emergency_cleanup
