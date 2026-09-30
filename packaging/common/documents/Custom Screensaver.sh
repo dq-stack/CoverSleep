@@ -1,5 +1,6 @@
 #!/bin/sh
 # Name: Custom Screensaver
+# Icon: /mnt/us/extensions/custom-screensaver/icons/icon-off.png
 # DontUseFBInk
 
 APP="/mnt/us/extensions/custom-screensaver"

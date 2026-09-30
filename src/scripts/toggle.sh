@@ -12,12 +12,56 @@ INDEXFILE="/tmp/custom_ss_last"
 FIFO="/tmp/custom_ss_events.fifo"
 
 LOG="$BASE/launcher.log"
+SCRIPTLET="/mnt/us/documents/Custom Screensaver.sh"
+ICON_DIR="$BASE/icons"
+LOG_MAX_BYTES=131072
+LOG_KEEP_LINES=400
 
 . "$BASE/blanket_renderers.sh"
 
 
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$LOG"
+}
+
+
+#
+# Keep a log file from growing without bound: once it passes
+# LOG_MAX_BYTES, keep only its last LOG_KEEP_LINES lines.
+#
+trim_log() {
+    if [ -f "$1" ] && [ "$(wc -c < "$1")" -gt "$LOG_MAX_BYTES" ]; then
+        tail -n "$LOG_KEEP_LINES" "$1" > "$1.tmp" && mv "$1.tmp" "$1"
+    fi
+}
+
+
+#
+# Point the Scriptlet's library icon at the on/off artwork. Rewriting the
+# file in place (same inode) makes the Kindle re-index it and redraw the
+# thumbnail. Skipped if the Scriptlet was renamed or has no Icon line.
+#
+set_scriptlet_icon() {
+    ICON_PATH="$ICON_DIR/icon-$1.png"
+
+    if [ ! -f "$SCRIPTLET" ] || [ ! -f "$ICON_PATH" ]; then
+        return 0
+    fi
+
+    if ! grep -q '^# Icon:' "$SCRIPTLET"; then
+        return 0
+    fi
+
+    if grep -qx "# Icon: $ICON_PATH" "$SCRIPTLET"; then
+        return 0
+    fi
+
+    if sed "s|^# Icon:.*|# Icon: $ICON_PATH|" "$SCRIPTLET" > "/tmp/custom_ss_scriptlet.tmp"; then
+        cat "/tmp/custom_ss_scriptlet.tmp" > "$SCRIPTLET"
+        log "Scriptlet icon set to $1"
+    fi
+
+    rm -f "/tmp/custom_ss_scriptlet.tmp"
 }
 
 
@@ -140,6 +184,7 @@ disable_custom_ss() {
     fi
 
     log "Custom screensaver DISABLED"
+    set_scriptlet_icon off
     notify "Custom screensaver OFF"
 }
 
@@ -160,6 +205,7 @@ enable_custom_ss() {
 
     if ! ls /mnt/us/screensavers/*.png >/dev/null 2>&1; then
         log "No images in /mnt/us/screensavers - not enabling"
+        set_scriptlet_icon off
         notify "No images in /screensavers - stock screensaver kept"
         exit 1
     fi
@@ -182,12 +228,14 @@ enable_custom_ss() {
 
         if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
             log "Custom screensaver ENABLED (PID $PID)"
+            set_scriptlet_icon on
             notify "Custom screensaver ON"
             exit 0
         fi
     fi
 
     log "ERROR: daemon failed to start"
+    set_scriptlet_icon off
     notify "Custom screensaver failed to start - stock kept"
 
     kill "$NEWPID" 2>/dev/null
@@ -202,6 +250,9 @@ enable_custom_ss() {
 # Command
 # -------------------------
 #
+
+trim_log "$LOG"
+trim_log "$BASE/custom_ss.log"
 
 case "${1:-toggle}" in
     disable)
@@ -218,6 +269,8 @@ case "${1:-toggle}" in
                 emergency_cleanup
             fi
         fi
+
+        set_scriptlet_icon off
         ;;
 
     toggle)

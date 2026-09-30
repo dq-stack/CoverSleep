@@ -141,7 +141,7 @@ draw_screensaver() {
 
     log "Drawing: $IMG"
 
-    "$FBINK" \
+    "$FBINK" -q \
         -g file="$IMG",w=-1,h=-1 \
         -f >>"$LOG" 2>&1
 
@@ -159,7 +159,7 @@ draw_screensaver() {
 draw_cover() {
     log "Drawing cover: $1"
 
-    "$FBINK" \
+    "$FBINK" -q \
         -c -f -W GC16 \
         -g file="$1",w=-2,h=-2,halign=CENTER,valign=CENTER,dither >>"$LOG" 2>&1
 
@@ -318,7 +318,7 @@ while read -r LINE <&3; do
             # as soon as the shield unmaps, so clearing afterwards would wipe
             # that repaint and cause a second flash + redraw in books.
             #
-            "$FBINK" \
+            "$FBINK" -q \
                 -k -f -W GC16 >>"$LOG" 2>&1
 
             shield_down
