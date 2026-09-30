@@ -5,7 +5,7 @@ ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 
 VERSION="${VERSION:-0.0.1}"
 TARGET="${TARGET:-kindlehf}"
-PACKAGE_NAME="custom-screensaver-${VERSION}-${TARGET}.zip"
+PACKAGE_NAME="coversleep-${VERSION}-${TARGET}.zip"
 
 DIST="$ROOT/dist"
 STAGING="$ROOT/build/package-zip"
