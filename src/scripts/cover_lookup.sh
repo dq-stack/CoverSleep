@@ -27,12 +27,12 @@ in_book() {
 # book?" the moment the book opens.
 #
 webreader_book() {
-    for CL_CMDLINE in /proc/[0-9]*/cmdline; do
-        CL_NAME="$(tr '\0' '\n' < "$CL_CMDLINE" 2>/dev/null | head -n 1)"
-
-        [ "${CL_NAME##*/}" = "webreader" ] || continue
-
-        ls -l "${CL_CMDLINE%/cmdline}/fd" 2>/dev/null |
+    #
+    # One grep over every process name keeps this fast at sleep time;
+    # a per-process loop costs seconds on the Kindle's CPU.
+    #
+    for CL_COMM in $(grep -l -x webreader /proc/[0-9]*/comm 2>/dev/null); do
+        ls -l "${CL_COMM%/comm}/fd" 2>/dev/null |
             sed -n 's/.*-> //p' |
             grep -E '^/mnt/(us|base-us)/documents/.*\.(azw3|azw|mobi|AZW3|AZW|MOBI)$'
     done | head -n 1

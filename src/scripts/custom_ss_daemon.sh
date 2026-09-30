@@ -277,6 +277,9 @@ while read -r LINE <&3; do
 
         *goingToScreenSaver*)
 
+            # Uptime in seconds (read builtin, no fork) for timing logs.
+            read -r SLEEP_START _ < /proc/uptime
+
             COVER=""
 
             if cover_mode_enabled; then
@@ -295,9 +298,11 @@ while read -r LINE <&3; do
             shield_up
 
             if [ -n "$COVER" ] && draw_cover "$COVER"; then
-                log "Book cover drawn"
+                read -r SLEEP_END _ < /proc/uptime
+                log "Book cover drawn (${SLEEP_START} -> ${SLEEP_END} s uptime)"
             elif draw_screensaver; then
-                log "Custom screensaver drawn"
+                read -r SLEEP_END _ < /proc/uptime
+                log "Custom screensaver drawn (${SLEEP_START} -> ${SLEEP_END} s uptime)"
             else
                 log "Drawing failed - shutting daemon down"
                 exit 1
