@@ -10,6 +10,7 @@ SHIELD_PIDFILE="/tmp/custom_ss_shield.pid"
 STATEFILE="/tmp/custom_ss_restore_renderers"
 INDEXFILE="/tmp/custom_ss_last"
 FIFO="/tmp/custom_ss_events.fifo"
+COVER_MODE_FILE="/mnt/us/screensavers/.cover_mode"
 
 LOG="$BASE/launcher.log"
 LOG_MAX_BYTES=131072
@@ -44,6 +45,27 @@ notify() {
             return
         fi
     done
+}
+
+
+covers_enabled() {
+    [ "$(cat "$COVER_MODE_FILE" 2>/dev/null)" != "off" ]
+}
+
+
+#
+# Switch from "covers in books" to "custom everywhere". The daemon re-reads
+# the mode file on every sleep, so no restart is needed.
+#
+switch_to_everywhere() {
+    if ! echo off > "$COVER_MODE_FILE"; then
+        log "ERROR: could not write $COVER_MODE_FILE"
+        notify "Couldn't change mode - still covers in books"
+        exit 1
+    fi
+
+    log "Mode: custom everywhere"
+    notify "Custom screensaver everywhere"
 }
 
 
@@ -179,6 +201,11 @@ enable_custom_ss() {
 
     chmod +x "$DAEMON"
 
+    #
+    # Turning on always starts in the first mode: covers in books.
+    #
+    rm -f "$COVER_MODE_FILE"
+
     log "Enabling custom screensaver"
 
     sh "$DAEMON" >/dev/null 2>&1 &
@@ -195,7 +222,7 @@ enable_custom_ss() {
 
         if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
             log "Custom screensaver ENABLED (PID $PID)"
-            notify "Custom screensaver ON"
+            notify "Custom screensaver ON - covers in books"
             exit 0
         fi
     fi
@@ -237,8 +264,16 @@ case "${1:-toggle}" in
         ;;
 
     toggle)
+        #
+        # Each tap moves to the next mode:
+        # covers in books -> custom everywhere -> off -> covers in books.
+        #
         if daemon_is_running; then
-            disable_custom_ss
+            if covers_enabled; then
+                switch_to_everywhere
+            else
+                disable_custom_ss
+            fi
         else
             #
             # Remove a stale PID file if the recorded process

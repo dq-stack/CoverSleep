@@ -63,7 +63,13 @@ The `kindlehf` package builds and includes every feature, but hasn't been tested
 4. Put your PNG images in `/screensavers/`. Any filename works. 758×1024 portrait suits a Paperwhite 2 exactly; other sizes are scaled to fill the screen.
 5. Eject the Kindle and open **Custom Screensaver** from the Library. You'll see "Custom screensaver ON" at the bottom of the screen.
 
-Tap **Custom Screensaver** again to turn it off and restore the stock screensaver.
+Each tap of **Custom Screensaver** moves to the next mode, and a message at the bottom of the screen says which one you're in:
+
+1. **Covers in books** ("Custom screensaver ON - covers in books"): the book's cover while you're reading, your PNGs everywhere else.
+2. **Custom everywhere** ("Custom screensaver everywhere"): your PNGs everywhere, including inside books. PNGs with transparency are drawn over the page you were reading.
+3. **Off** ("Custom screensaver OFF"): the stock screensaver is restored.
+
+The next tap after Off goes back to covers in books.
 
 ### Updating
 
@@ -84,7 +90,8 @@ Keep `/screensavers/` unless you want to delete your images too.
 
 ## Options
 
-- **Turn off book covers** (custom screensavers everywhere): create `/screensavers/.cover_mode` containing the word `off`. Delete the file to turn covers back on.
+- **Transparent images:** in *Custom everywhere* mode, a PNG with an alpha channel is blended over whatever was on screen when the Kindle slept (the book page or menu). Fully opaque PNGs simply cover the screen as usual.
+- The current mode is stored in `/screensavers/.cover_mode` (`off` = custom everywhere). Turning CoverSleep on always starts in *Covers in books*.
 
 ---
 
