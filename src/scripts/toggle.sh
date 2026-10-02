@@ -5,6 +5,9 @@
 BASE="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 DAEMON="$BASE/custom_ss_daemon.sh"
 
+# The daemon runs from a copy here, off /mnt/us (see stage_daemon).
+RUNDIR="/tmp/coversleep"
+
 PIDFILE="/tmp/custom_ss_daemon.pid"
 SHIELD_PIDFILE="/tmp/custom_ss_shield.pid"
 STATEFILE="/tmp/custom_ss_restore_renderers"
@@ -86,9 +89,10 @@ daemon_is_running() {
 
     # Make sure the PID actually belongs to our daemon,
     # rather than some unrelated process that reused the PID.
+    # Older versions ran it straight from $BASE, newer ones from $RUNDIR.
     if [ -r "/proc/$PID/cmdline" ]; then
         tr '\0' ' ' < "/proc/$PID/cmdline" 2>/dev/null |
-            grep -F "$DAEMON" >/dev/null 2>&1 ||
+            grep -F "/custom_ss_daemon.sh" >/dev/null 2>&1 ||
             return 1
     fi
 
@@ -130,6 +134,8 @@ emergency_cleanup() {
         "$INDEXFILE" \
         "$FIFO"
 
+    rm -rf "$RUNDIR"
+
     if [ "$EMERGENCY_RESULT" -eq 0 ]; then
         rm -f "$STATEFILE"
     fi
@@ -137,6 +143,28 @@ emergency_cleanup() {
     DISPLAY=:0 "$BASE/bin/screensaver_shield" --refresh >>"$LOG" 2>&1
 
     return "$EMERGENCY_RESULT"
+}
+
+
+#
+# Copy the daemon, its helpers and binaries into RAM. In USB drive mode the
+# Kindle kills every process using /mnt/us without warning; running from
+# /tmp keeps the daemon alive, so it never skips its cleanup.
+#
+stage_daemon() {
+    rm -rf "$RUNDIR"
+
+    mkdir -p "$RUNDIR" &&
+        cp "$DAEMON" \
+            "$BASE/blanket_renderers.sh" \
+            "$BASE/cover_lookup.sh" \
+            "$RUNDIR/" &&
+        cp -R "$BASE/bin" "$RUNDIR/" ||
+        return 1
+
+    cp "$BASE/build-metadata.txt" "$RUNDIR/" 2>/dev/null
+
+    return 0
 }
 
 
@@ -199,7 +227,12 @@ enable_custom_ss() {
         exit 1
     fi
 
-    chmod +x "$DAEMON"
+    if ! stage_daemon; then
+        log "ERROR: could not copy the daemon to $RUNDIR"
+        notify "Custom screensaver failed to start - stock kept"
+        rm -rf "$RUNDIR"
+        exit 1
+    fi
 
     #
     # Turning on always starts in the first mode: covers in books.
@@ -208,7 +241,12 @@ enable_custom_ss() {
 
     log "Enabling custom screensaver"
 
-    sh "$DAEMON" >/dev/null 2>&1 &
+    (
+        cd / || exit 1
+        CS_LOG="$BASE/custom_ss.log"
+        export CS_LOG
+        exec sh "$RUNDIR/custom_ss_daemon.sh" >/dev/null 2>&1
+    ) &
 
     NEWPID=$!
 

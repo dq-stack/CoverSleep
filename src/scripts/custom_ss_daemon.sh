@@ -20,7 +20,16 @@ STATEFILE="/tmp/custom_ss_restore_renderers"
 INDEXFILE="/tmp/custom_ss_last"
 FIFO="/tmp/custom_ss_events.fifo"
 
-LOG="$BASE/custom_ss.log"
+#
+# toggle.sh runs us from a copy in /tmp (see stage_daemon there) and passes
+# the real log path, so nothing we hold open lives on /mnt/us. When the Kindle
+# enters USB drive mode it kills anything using /mnt/us without warning, which
+# would skip cleanup and leave the stock screensaver unloaded.
+#
+LOG="${CS_LOG:-$BASE/custom_ss.log}"
+LISTENER_LOG="/tmp/custom_ss_listeners.log"
+
+cd / || exit 1
 
 . "$BASE/blanket_renderers.sh"
 . "$BASE/cover_lookup.sh"
@@ -62,7 +71,8 @@ shield_down() {
 shield_up() {
     shield_down
 
-    DISPLAY=:0 "$SHIELD" >>"$LOG" 2>&1 &
+    # Stays up for the whole sleep, so its output can't hold /mnt/us open.
+    DISPLAY=:0 "$SHIELD" >>"$LISTENER_LOG" 2>&1 &
     SPID=$!
 
     echo "$SPID" > "$SHIELD_PIDFILE"
@@ -245,12 +255,12 @@ exec 3<>"$FIFO"
 
 lipc-wait-event \
     -m com.lab126.powerd \
-    goingToScreenSaver >&3 2>>"$LOG" &
+    goingToScreenSaver >&3 2>>"$LISTENER_LOG" &
 SLEEP_PID=$!
 
 lipc-wait-event \
     -m com.lab126.powerd \
-    outOfScreenSaver >&3 2>>"$LOG" &
+    outOfScreenSaver >&3 2>>"$LISTENER_LOG" &
 WAKE_PID=$!
 
 #
