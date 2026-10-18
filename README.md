@@ -17,7 +17,8 @@ CoverSleep is a fork of [Kindle Custom Screensaver](https://github.com/chengandr
 
 - Book cover on the sleep screen while reading (MOBI, AZW and AZW3 books with an embedded cover)
 - Random custom PNG screensavers everywhere else, with no back-to-back repeats
-- Falls back to your custom screensavers when a book has no cover or uses another format (KFX, PDF, …)
+- Separate images for books and menus: name a PNG `…-transparent.png` or `…-ts.png` and it's drawn over the page when you sleep in a book
+- Falls back to your transparent screensavers when a book has no cover or uses another format (KFX, PDF, …)
 - Falls back to the stock Kindle screensaver if `/screensavers/` has no images
 - Fast: the image appears in about half a second, with a single clean refresh on wake
 - On-screen "ON" / "OFF" message when you toggle it
@@ -60,13 +61,13 @@ The `kindlehf` package builds and includes every feature, but hasn't been tested
    ```
 
 3. Connect the Kindle over USB and copy the three folders into the root of the Kindle. If `documents` or `extensions` already exist, copy the contents into them; don't replace the whole folders.
-4. Put your PNG images in `/screensavers/`. Any filename works. 758×1024 portrait suits a Paperwhite 2 exactly; other sizes are scaled to fill the screen.
+4. Put your PNG images in `/screensavers/`. 758×1024 portrait suits a Paperwhite 2 exactly; other sizes are scaled to fill the screen. Add `-transparent` or `-ts` to the end of a name (e.g. `Sleeping Dog-ts.png`, any capitals) to mark it as a transparent image for books; any other name is a full-screen image for menus.
 5. Eject the Kindle and open **Custom Screensaver** from the Library. You'll see "Custom screensaver ON" at the bottom of the screen.
 
 Each tap of **Custom Screensaver** moves to the next mode, and a message at the bottom of the screen says which one you're in:
 
-1. **Covers in books** ("Custom screensaver ON - covers in books"): the book's cover while you're reading, your PNGs everywhere else.
-2. **Custom everywhere** ("Custom screensaver everywhere"): your PNGs everywhere, including inside books. PNGs with transparency are drawn over the page you were reading.
+1. **Covers in books** ("Custom screensaver ON - covers in books"): the book's cover while you're reading, your full-screen PNGs everywhere else. Books without a cover get a transparent PNG.
+2. **Custom everywhere** ("Custom screensaver everywhere"): a transparent PNG drawn over the page when you sleep in a book, a full-screen PNG everywhere else.
 3. **Off** ("Custom screensaver OFF"): the stock screensaver is restored.
 
 The next tap after Off goes back to covers in books.
@@ -90,7 +91,7 @@ Keep `/screensavers/` unless you want to delete your images too.
 
 ## Options
 
-- **Transparent images:** in *Custom everywhere* mode, a PNG with an alpha channel is blended over whatever was on screen when the Kindle slept (the book page or menu). Fully opaque PNGs simply cover the screen as usual.
+- **Transparent images:** PNGs named `…-transparent.png` or `…-ts.png` (any capitals) are used when you sleep in a book, and their transparent areas show the page you were reading. All other PNGs are used everywhere else. If you only have one kind, it's used everywhere. Each kind avoids back-to-back repeats on its own.
 - The current mode is stored in `/screensavers/.cover_mode` (`off` = custom everywhere). Turning CoverSleep on always starts in *Covers in books*.
 
 ---
@@ -104,12 +105,13 @@ On sleep:
 ```text
 sleep event
    ↓
-is a book open?  ── yes ──→ extract the cover from the book file (cached per book)
-   │ no                         ↓
-   ↓                       draw the cover, centred
-pick a random PNG
-   ↓
-draw it full-screen
+is a book open?  ── yes ──→ covers mode and the book has a cover?
+   │ no                         │ yes                    │ no
+   ↓                            ↓                        ↓
+pick a random              extract the cover        pick a random
+full-screen PNG            (cached per book) and    -transparent / -ts PNG
+   ↓                       draw it, centred              ↓
+draw it                                             draw it over the page
 ```
 
 The open book is identified from the Kindle's book renderer (`webreader`), which holds exactly the open book's file. That makes it instant and exact, even if you sleep the moment a book opens. The Library database is only a fallback.

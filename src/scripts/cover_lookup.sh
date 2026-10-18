@@ -64,11 +64,12 @@ current_book_path() {
 
 
 #
-# Echoes a path to the open book's cover image, extracting and caching it
-# on first use. Returns 1 when the book has no usable cover.
+# Echoes a path to the cover image of book $1 (from current_book_path),
+# extracting and caching it on first use. Returns 1 when the book has no
+# usable cover.
 #
-current_cover_path() {
-    CL_BOOK="$(current_book_path)"
+book_cover_path() {
+    CL_BOOK="$1"
 
     if [ -z "$CL_BOOK" ]; then
         return 1

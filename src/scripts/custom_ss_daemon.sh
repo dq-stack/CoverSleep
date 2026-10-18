@@ -112,7 +112,7 @@ cleanup() {
     fi
 
     rm -f "$PIDFILE"
-    rm -f "$INDEXFILE"
+    rm -f "$INDEXFILE".*
     rm -f "$COVER_CACHE_PREFIX"*
 
     screen_refresh
@@ -121,17 +121,38 @@ cleanup() {
 }
 
 
-draw_screensaver() {
-    IMAGES="$(ls "$SS_DIR"/*.png 2>/dev/null)"
+#
+# Images named *-transparent.png or *-ts.png (any case) are for sleeping in
+# a book, where they're drawn over the page; the rest are for every other
+# screen. When one kind is missing, the other is used instead.
+#
+TRANSPARENT_RE='-(transparent|ts)\.png$'
 
-    if [ -z "$IMAGES" ]; then
+draw_screensaver() {
+    ALL_IMAGES="$(ls "$SS_DIR"/*.png 2>/dev/null)"
+
+    if [ -z "$ALL_IMAGES" ]; then
         log "ERROR: no *.png files"
         return 1
     fi
 
+    POOL="$1"
+
+    if [ "$POOL" = "book" ]; then
+        IMAGES="$(echo "$ALL_IMAGES" | grep -i -E -e "$TRANSPARENT_RE")"
+    else
+        IMAGES="$(echo "$ALL_IMAGES" | grep -v -i -E -e "$TRANSPARENT_RE")"
+    fi
+
+    if [ -z "$IMAGES" ]; then
+        log "No $POOL images - using the other kind"
+        IMAGES="$ALL_IMAGES"
+        POOL="all"
+    fi
+
     COUNT="$(echo "$IMAGES" | wc -l)"
 
-    LAST="$(cat "$INDEXFILE" 2>/dev/null)"
+    LAST="$(cat "$INDEXFILE.$POOL" 2>/dev/null)"
 
     #
     # Pick a random image, avoiding an immediate repeat when there is
@@ -145,11 +166,11 @@ draw_screensaver() {
         NEXT=$(( RAND % COUNT ))
     fi
 
-    echo "$NEXT" > "$INDEXFILE"
+    echo "$NEXT" > "$INDEXFILE.$POOL"
 
     IMG="$(echo "$IMAGES" | sed -n "$((NEXT + 1))p")"
 
-    log "Drawing: $IMG"
+    log "Drawing ($POOL): $IMG"
 
     "$FBINK" -q \
         -g file="$IMG",w=-1,h=-1 \
@@ -290,10 +311,17 @@ while read -r LINE <&3; do
             # Uptime in seconds (read builtin, no fork) for timing logs.
             read -r SLEEP_START _ < /proc/uptime
 
+            BOOK="$(current_book_path)" || BOOK=""
             COVER=""
 
-            if cover_mode_enabled; then
-                COVER="$(current_cover_path)" || COVER=""
+            if [ -n "$BOOK" ]; then
+                POOL="book"
+
+                if cover_mode_enabled; then
+                    COVER="$(book_cover_path "$BOOK")" || COVER=""
+                fi
+            else
+                POOL="menu"
             fi
 
             #
@@ -310,7 +338,7 @@ while read -r LINE <&3; do
             if [ -n "$COVER" ] && draw_cover "$COVER"; then
                 read -r SLEEP_END _ < /proc/uptime
                 log "Book cover drawn (${SLEEP_START} -> ${SLEEP_END} s uptime)"
-            elif draw_screensaver; then
+            elif draw_screensaver "$POOL"; then
                 read -r SLEEP_END _ < /proc/uptime
                 log "Custom screensaver drawn (${SLEEP_START} -> ${SLEEP_END} s uptime)"
             else
