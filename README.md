@@ -63,9 +63,9 @@ Reports from other models are welcome. The original project's `kindlehf` screens
 
 3. Connect the Kindle over USB and copy the three folders into the root of the Kindle. If `documents` or `extensions` already exist, copy the contents into them; don't replace the whole folders.
 4. Put your PNG images in `/screensavers/`. 758×1024 portrait suits a Paperwhite 2 exactly and 1072×1448 a Kindle 11th gen; other sizes are scaled to fill the screen. Add `-transparent` or `-ts` to the end of a name (e.g. `Sleeping Dog-ts.png`, any capitals) to mark it as a transparent image for books; any other name is a full-screen image for menus.
-5. Eject the Kindle and open **Custom Screensaver** from the Library. You'll see "Custom screensaver ON" at the bottom of the screen.
+5. Eject the Kindle and open **Custom Screensaver** from the Library. You'll see "Custom screensaver ON" in a box in the middle of the screen (at the bottom on older firmware).
 
-Each tap of **Custom Screensaver** moves to the next mode, and a message at the bottom of the screen says which one you're in:
+Each tap of **Custom Screensaver** moves to the next mode, and a message says which one you're in:
 
 1. **Covers in books** ("Custom screensaver ON - covers in books"): the book's cover while you're reading, your full-screen PNGs everywhere else. Books without a cover get a transparent PNG.
 2. **Custom everywhere** ("Custom screensaver everywhere"): a transparent PNG drawn over the page when you sleep in a book, a full-screen PNG everywhere else.

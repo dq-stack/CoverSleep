@@ -39,12 +39,14 @@ trim_log() {
 
 
 #
-# Show a one-line status message near the bottom of the screen.
+# Show a status message: in a box in the middle of the screen on 5.16.3+
+# firmware (msgbox.sh), otherwise one line near the bottom.
 #
 notify() {
     for NOTIFY_FBINK in "$BASE/bin/fbink_hf" "$BASE/bin/fbink"; do
         if [ -x "$NOTIFY_FBINK" ]; then
-            "$NOTIFY_FBINK" -q -m -y -6 "$1" >/dev/null 2>&1
+            sh "$BASE/msgbox.sh" "$NOTIFY_FBINK" "$1" >/dev/null 2>&1 ||
+                "$NOTIFY_FBINK" -q -m -y -6 "$1" >/dev/null 2>&1
             return
         fi
     done
