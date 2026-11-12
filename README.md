@@ -4,7 +4,7 @@
 
 CoverSleep is a lightweight sleep-screen hack for jailbroken Kindles:
 
-- **Asleep inside a book?** The Kindle shows that book's cover, pulled full-size from the book file and centred without stretching.
+- **Asleep inside a book?** The Kindle shows that book's cover, pulled full-size from the book file and centred without stretching, with black bars if it doesn't fill the screen.
 - **Asleep anywhere else** (Home, Library, Store, Settings)? It shows a random image from your own `/screensavers/` folder, never the same one twice in a row.
 
 It keeps the stock Kindle reading experience. It **doesn't need KOReader or KUAL**, doesn't modify any Kindle system files, and doesn't start at boot, so a restart always returns the Kindle to stock behaviour.
@@ -44,8 +44,9 @@ Not sure which you need? Newer Kindles on 5.16.3 or later use `kindlehf`; anythi
 | Device | Firmware | Package |
 | --- | --- | --- |
 | Kindle Paperwhite 2 (6th gen) | 5.12.2.2 | `kindlepw2` |
+| Kindle (11th gen, 2022) | 5.18.1 | `kindlehf` |
 
-The `kindlehf` package builds and includes every feature, but hasn't been tested on a device yet. Reports are welcome. The original project's `kindlehf` screensaver engine was tested on the Kindle 12th Gen, Paperwhite 5 and Paperwhite 6.
+Reports from other models are welcome. The original project's `kindlehf` screensaver engine was tested on the Kindle 12th Gen, Paperwhite 5 and Paperwhite 6.
 
 ---
 
@@ -61,7 +62,7 @@ The `kindlehf` package builds and includes every feature, but hasn't been tested
    ```
 
 3. Connect the Kindle over USB and copy the three folders into the root of the Kindle. If `documents` or `extensions` already exist, copy the contents into them; don't replace the whole folders.
-4. Put your PNG images in `/screensavers/`. 758×1024 portrait suits a Paperwhite 2 exactly; other sizes are scaled to fill the screen. Add `-transparent` or `-ts` to the end of a name (e.g. `Sleeping Dog-ts.png`, any capitals) to mark it as a transparent image for books; any other name is a full-screen image for menus.
+4. Put your PNG images in `/screensavers/`. 758×1024 portrait suits a Paperwhite 2 exactly and 1072×1448 a Kindle 11th gen; other sizes are scaled to fill the screen. Add `-transparent` or `-ts` to the end of a name (e.g. `Sleeping Dog-ts.png`, any capitals) to mark it as a transparent image for books; any other name is a full-screen image for menus.
 5. Eject the Kindle and open **Custom Screensaver** from the Library. You'll see "Custom screensaver ON" at the bottom of the screen.
 
 Each tap of **Custom Screensaver** moves to the next mode, and a message at the bottom of the screen says which one you're in:

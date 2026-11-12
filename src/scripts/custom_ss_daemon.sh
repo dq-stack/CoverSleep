@@ -190,8 +190,10 @@ draw_screensaver() {
 draw_cover() {
     log "Drawing cover: $1"
 
+    # Clear to black so covers that don't fill the screen get black bars
+    # (matching the bezel and the stock "Show cover" look), not white ones.
     "$FBINK" -q \
-        -c -f -W GC16 \
+        -c -B BLACK -f -W GC16 \
         -g file="$1",w=-2,h=-2,halign=CENTER,valign=CENTER,dither >>"$LOG" 2>&1
 
     RESULT=$?
